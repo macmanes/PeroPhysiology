@@ -29,7 +29,7 @@ bring_in_data <- function(data_file)
     mutate(date, date = as.POSIXlt(date, format = "%d-%b-%y", tz="EST")) %>%
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     #mutate(DateTime = as.POSIXlt(DateTime), tz="EST")  %>%
-    #mutate(DateTime, DateTime = as.POSIXlt(ymd_hms(DateTime), tz="EST"))
+    mutate(DateTime, DateTime = as.POSIXlt(ymd_hms(DateTime), tz="EST"))
     mutate(weight = 
              ifelse(Animal == 0, mean(mouse_metadata_rep1$weight[mouse_metadata_rep1$cage == 0], na.rm = TRUE), 
              ifelse(Animal == 1, mean(mouse_metadata_rep1$weight[mouse_metadata_rep1$cage == 1], na.rm = TRUE),

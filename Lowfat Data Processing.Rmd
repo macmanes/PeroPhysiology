@@ -77,11 +77,43 @@ cages <- cages %>%
   select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
          H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
          SD_H2Omg, SS4_FR, H2O_WVP, BP)
-chunk5 <- cages
+
+#here is the outlier removal part
+
+count = 1
+dependent_variables = c("EE", "RQ", "VO2", "VCO2", "H2Omg", "Activity")
+varname_list = c("EE_OLs","RQ_OLs","VO2_OLs","VCO2_OLs","H2O_OLs", "Activity_OLs")
+
+for (DV in dependent_variables){
+  print(DV)
+    model <- lm(as.formula(paste0(DV, " ~ Animal_ID")), data = cages)
+  model.metrics <- augment(model) %>% select(-.hat, -.sigma, -.fitted)
+  summ <- model.metrics %>% filter(abs(.std.resid) > 2) %>% as.data.frame()
+
+    OL_list = c()
+  masterlist = c()
+  for (each_outlier_row in 1:nrow(summ)){
+    this_weight <- summ[each_outlier_row, "Animal_ID"]
+    this_DV  <- summ[each_outlier_row, DV]
+    OL_list <- c(OL_list, (which(cages$Animal_ID == this_weight & cages[DV] == this_DV)))
+
+  }
+  print(OL_list)
+  #Assign list of outliers to specified variable lists (OL_list_EE, RQ, VO2, VCO2, mgH2O)
+  assign(paste("OL_list_", DV, sep = ""), OL_list)  
+}
+
+masterlist <- c(OL_list_EE, OL_list_RQ, OL_list_VO2, OL_list_VCO2, OL_list_H2Omg, OL_list_Activity)
+masterlist_noDup <- unique(masterlist)
+
+lowfat_dehydration_noOL_rep1 <- cages[-c(masterlist_noDup),]
+#write.csv(all_noOL_M, "all_noOL_M.csv", row.names = FALSE)
+
 ```
 
 
 ```{r rename and merge files}
+#should only need this for rep1
 cages <- rbind(chunk5, cages)
 ```
 
@@ -91,9 +123,20 @@ baseline_rep1 <- interval(rep1_water_removal - days(3), rep1_water_removal)
 day1_rep1 <- interval(rep1_water_removal, rep1_water_removal + days(1))
 day2_rep1 <- interval(rep1_water_removal + days(1), rep1_water_removal + days(2))
 day3_rep1 <- interval(rep1_water_removal + days(2), rep1_water_removal + days(3))
+
+rep2_water_removal <- ymd_hms("2022-10-26 11:59:59", tz="EST")
+baseline_rep2 <- interval(rep2_water_removal - days(3), rep2_water_removal)
+day1_rep2 <- interval(rep2_water_removal, rep2_water_removal + days(1))
+day2_rep2 <- interval(rep2_water_removal + days(1), rep2_water_removal + days(2))
+day3_rep2 <- interval(rep2_water_removal + days(2), rep2_water_removal + days(3))
 ```
 
+```{r merge reps}
 
+lowfat_dehydration_noOL_rep1
+
+lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% baseline,]
+```
 
 # IDENTIFY AND REMOVE OUTLIERS
 
@@ -131,14 +174,15 @@ lowfat_dehydration_noOL <- cages[-c(masterlist_noDup),]
 ```
 
 
-Fix chunk5 times
 
 
 ```{r fix time}
-chunk5 <- chunk5 %>% 
-  mutate(time = as.POSIXct(time, tz="EST", format = "%H:%M:%S")) %>%
-  mutate(hour = strftime(time, format="%H:%M:%S")) %>%
-  mutate(x_date = ymd_hms(paste("2022-10-25", hour)))
+#I dont think this is needed. 
+
+#chunk5 <- chunk5 %>% 
+#  mutate(time = as.POSIXct(time, tz="EST", format = "%H:%M:%S")) %>%
+#  mutate(hour = strftime(time, format="%H:%M:%S")) %>%
+#  mutate(x_date = ymd_hms(paste("2022-10-25", hour)))
 
 ```
 
