@@ -54,22 +54,22 @@ ldr1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfa
 ```{r manipulate data}
 
 #make activity data non-cumulative
-ldr1 <- ldr1 %>% 
-  add_column(MOD_ADX = ldr1_act$MOD_ADX) %>%
+chunk5 <- chunk5 %>% 
+  add_column(MOD_ADX = chunk5_act$MOD_ADX) %>%
   mutate(Activity = MOD_ADX - lag(MOD_ADX, default = 0))
 
-#dates <- unique(ldr1$date)
-#ldr1$day <- match(ldr1$date, dates)
+#dates <- unique(chunk5$date)
+#chunk5$day <- match(chunk5$date, dates)
 
 #subset out baseline data
 baseline <- c(7)
-baseline_cage <- ldr1 %>% 
+baseline_cage <- chunk5 %>% 
   filter(Animal %in% baseline)
 baseline_cage <- baseline_cage %>%  mutate(DateTime = round_date(ymd_hms(as.POSIXct(baseline_cage$DateTime)), unit="min"))
 
 #subset out animal data
 target <- c(0,1,2,3,4,5,6)
-cages <- ldr1 %>% 
+cages <- chunk5 %>% 
   filter(Animal %in% target)
 
 cages <- cages %>% 
@@ -77,6 +77,7 @@ cages <- cages %>%
   select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
          H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
          SD_H2Omg, SS4_FR, H2O_WVP, BP)
+chunk5 <- cages
 ```
 
 
@@ -85,67 +86,14 @@ cages <- rbind(chunk5, cages)
 ```
 
 ```{r make experimental intervals}
-beginning_rep1 <- min(cages$DateTime)
-baseline_rep1 <- interval(beginning, ymd_hms("2022-10-06 11:59:59 EST"))
-day1_rep1 <- interval(ymd_hms("2022-10-06 11:59:59 EST"), ymd_hms("2022-10-06 11:59:59 EST") + days(1))
-day2_rep1 <- interval(ymd_hms("2022-10-06 11:59:59 EST") + days(1),ymd_hms("2022-10-06 11:59:59 EST") + days(2))
-day3_rep1 <- interval(ymd_hms("2022-10-06 11:59:59 EST") + days(2),ymd_hms("2022-10-06 11:59:59 EST") + days(3))
+rep1_water_removal <- ymd_hms("2022-10-06 11:59:59", tz="EST")
+baseline_rep1 <- interval(rep1_water_removal - days(3), rep1_water_removal)
+day1_rep1 <- interval(rep1_water_removal, rep1_water_removal + days(1))
+day2_rep1 <- interval(rep1_water_removal + days(1), rep1_water_removal + days(2))
+day3_rep1 <- interval(rep1_water_removal + days(2), rep1_water_removal + days(3))
 ```
 
 
-
-Establish day and night
-
-```{r Establish day and night}
-females_dehy$time_in_S <- period_to_seconds(hms(females_dehy$StartTime)) #Total seconds to reach that point in the day
-males_dehy$time_in_S <- period_to_seconds(hms(males_dehy$StartTime)) #Total seconds to reach that point in the day
-
-#Establish when each interval/transition starts and stops
-#Daytime interval: hrs:8:00-21:00
-daytime_interval <- period_to_seconds(hms("09:00:00")):period_to_seconds(hms("20:00:00"))
-#Night time: hrs 22:00-5:00 
-nighttime_interval <- c((period_to_seconds(hms("21:00:01")):period_to_seconds(hms("24:59:59"))), #evening portion of 'nighttime'
-                        (period_to_seconds(hms("00:00:00")):period_to_seconds(hms("06:00:00")))) #morning portion of 'nightitme'
-#Morning transition (t1): 6:00-9:00
-t1_interval <- period_to_seconds(hms("06:00:00")):period_to_seconds(hms("09:00:00"))
-#Evening transition (t2): 20-21:00
-t2_interval <- period_to_seconds(hms("20:00:00")):period_to_seconds(hms("21:00:00"))
-
-#### Create data subsets for males and females for each H2O (day, night, baseline [BL]) and each time block [e.g., t1/transition1, daytime, t2/transistion2, nighttime])
-# all males and females across all 3 H2Os (BL, hot, cold)
-all_M = males_dehy[males_dehy$Sex == 'Male', ]
-all_F = females_dehy[females_dehy$Sex == 'Female', ]
-
-females_dehy_day = all_F[all_F$time_in_S %in% daytime_interval, ]
-females_dehy_day$interval <- "light"
- 
-females_dehy_night = all_F[all_F$time_in_S %in% nighttime_interval, ]
-females_dehy_night$interval <- "dark"
-
-females_dehy_t1 = all_F[all_F$time_in_S %in% t1_interval, ]
-females_dehy_t1$interval <- "T1"
-
-females_dehy_t2 = all_F[all_F$time_in_S %in% t2_interval, ]
-females_dehy_t2$interval <- "T2"
-
-males_dehy_day = all_M[all_M$time_in_S %in% daytime_interval, ]
-males_dehy_day$interval <- "light"
-  
-males_dehy_night = all_M[all_M$time_in_S %in% nighttime_interval, ]
-males_dehy_night$interval <- "dark"
-
-males_dehy_t1 = all_M[all_M$time_in_S %in% t1_interval, ]
-males_dehy_t1$interval <- "T1"
-
-males_dehy_t2 = all_M[all_M$time_in_S %in% t2_interval, ]
-males_dehy_t2$interval <- "T2"
-
-
-
-all_F <- rbind(females_dehy_day,females_dehy_night,females_dehy_t1,females_dehy_t2)
-
-all_M <- rbind(males_dehy_day,males_dehy_night,males_dehy_t1,males_dehy_t2)
-```
 
 # IDENTIFY AND REMOVE OUTLIERS
 
@@ -182,12 +130,25 @@ lowfat_dehydration_noOL <- cages[-c(masterlist_noDup),]
 #write.csv(all_noOL_M, "all_noOL_M.csv", row.names = FALSE)
 ```
 
+
+Fix chunk5 times
+
+
+```{r fix time}
+chunk5 <- chunk5 %>% 
+  mutate(time = as.POSIXct(time, tz="EST", format = "%H:%M:%S")) %>%
+  mutate(hour = strftime(time, format="%H:%M:%S")) %>%
+  mutate(x_date = ymd_hms(paste("2022-10-25", hour)))
+
+```
+
+
 Make plots
 
 ```{r make plots}
 
 coeff <- 0
-temperatures <- ggplot(data = mouse_metadata[mouse_metadata$water == "yes",],
+temperatures <- ggplot(data = mouse_metadata_rep1[mouse_metadata_rep1$water == "yes",],
                      aes(x=as.POSIXct(time) + hours(0),y=body_temp)) +
      theme_classic()+
      scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
@@ -201,9 +162,9 @@ temperatures <- ggplot(data = mouse_metadata[mouse_metadata$water == "yes",],
                     color="navyblue"), show.legend = FALSE)+
      geom_smooth(method='gam')+
      theme(axis.text.y=element_text(size=12))+
-     geom_point(data = mouse_metadata[mouse_metadata$water == "no",],
+     geom_point(data = mouse_metadata_rep1[mouse_metadata_rep1$water == "no",],
                      aes(x=as.POSIXct(time) + hours(0),y=body_temp, color="red")) +
-     geom_point(data = chunk2, aes(x=as.POSIXct(StartTime), y=Deg_C + coeff), size=1, color="black", shape=4)+
+     geom_point(data = chunk5, aes(x=as.POSIXct(time), y=Deg_C + coeff), size=1, color="black", shape=4)+
      labs(x = "")+
      scale_y_continuous(name = "Body Temperature (°C)", limits = c(20,43), sec.axis = sec_axis(~. - coeff, name="Room Temperature (°C)"))+ 
      guides(alpha = "none", size= "none", color= "none")+

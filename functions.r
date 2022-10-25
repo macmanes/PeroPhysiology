@@ -25,7 +25,7 @@ bring_in_data <- function(data_file)
     mutate(EE = 0.06*(3.941*VO2 + 1.106*VCO2)) %>% 
     mutate(RQ = VCO2/VO2) %>%
     rename(c("StartTime" = "time", "StartDate" = "date")) %>%
-    mutate(time = format(time, "%H:%M:%S", tz="EST")) %>%
+    #mutate(time = format(time, "%H:%M:%S", tz="EST")) %>%
     mutate(date, date = as.POSIXlt(date, format = "%d-%b-%y", tz="EST")) %>%
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     #mutate(DateTime = as.POSIXlt(DateTime), tz="EST")  %>%
@@ -80,36 +80,6 @@ bring_in_data <- function(data_file)
 }
 
 
-#mouse id and weights function
-#will add electrolytes....one day
-weight_ID <- function(date)
-{  
-  subset <- mouse_metadata[which(mouse_metadata$date == date), names(mouse_metadata) %in% c("sex", "animal_id", "cage_number", "weight", "sodium", "potessium", "chloride", "bicarb", "BUN", "creatinine", "glucose", "calcium", "gap", "hct", "hb*")]
-  
-  ids <- subset$animal_id
-  weights <- as.double(subset$weight)
-  
-  x = 0
-  
-  for (i in 1:length(ids))
-  {
-    assign(paste("animalID", x, sep = ""), ids[i], envir = parent.frame())
-    assign(paste("cageweight", x, sep = ""), weights[i], envir = parent.frame())
-    x = x + 1
-  }
-} 
-
-
-#merge data and subset for 72 hours function
-merge_data <- function(cage)
-{
-  start_time <- ymd_hms(cage[[1]][1])
-  begin_experiment <- start_time + dhours(2)
-  end_time <- begin_experiment + dhours(72)
-  filtered <- cage %>% filter(DateTime >= begin_experiment & DateTime <= end_time)
-  
-  return(filtered)
-}
 
 
 save <- function(name, fig_len, fig_width,plot_name)
