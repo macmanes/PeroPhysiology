@@ -47,6 +47,9 @@ source("functions.R")
 chunk5 <- bring_in_data("chunk5.csv")
 chunk5_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk5_activity.csv", n_max=dim(chunk5)[1])
 
+chunk1 <- bring_in_data("chunk1.csv")
+chunk1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk1_activity.csv", n_max=dim(chunk1)[1])
+
 ldr1 <- bring_in_data("lowfat_dehydrated_rep1.csv")
 ldr1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/lowfat_dehydrated_rep1_activity.csv", n_max=dim(ldr1)[1])
 ```
@@ -142,7 +145,7 @@ cages <- cages %>%
 
 ldr1 <- cages
 
-
+cages <- rbind(ldr1, chunk5)
 
 
 #here is the outlier removal part
