@@ -37,6 +37,11 @@ mouse_metadata_rep1 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     mutate(DateTime = as.POSIXlt(DateTime), tz="EST")
 
+mouse_metadata_rep2 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/mouse_data_rep2.csv",skip_empty_rows=TRUE) %>%
+    mutate(date, date = as.Date(date, format = "%d-%m-%y", tz="EST")) %>%
+    unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
+    mutate(DateTime = as.POSIXlt(DateTime), tz="EST")
+
 #source("C:/Users/mdm2000/OneDrive - USNH/Diet_paper/ExploreData_3_using gamm.R")
 source("functions.R")
 ```
@@ -199,6 +204,9 @@ baseline_rep2 <- interval(rep2_water_removal - days(3), rep2_water_removal)
 day1_rep2 <- interval(rep2_water_removal, rep2_water_removal + days(1))
 day2_rep2 <- interval(rep2_water_removal + days(1), rep2_water_removal + days(2))
 day3_rep2 <- interval(rep2_water_removal + days(2), rep2_water_removal + days(3))
+
+baseline_temp_rep1 <- interval(rep1_water_removal - days(30), rep1_water_removal)
+baseline_temp_rep2 <- interval(rep2_water_removal - days(30), rep2_water_removal)
 ```
 
 ```{r merge reps for differert days}
@@ -206,7 +214,7 @@ day3_rep2 <- interval(rep2_water_removal + days(2), rep2_water_removal + days(3)
 
 
 baseline_temps <-
-  rbind(mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within% baseline_rep1,])
+  rbind(mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within%  baseline_temp_rep1,], mouse_metadata_rep2[mouse_metadata_rep2$DateTime %within% baseline_temp_rep2,] )
 
 day1_temps <-
   rbind(mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within% day1_rep1,])
