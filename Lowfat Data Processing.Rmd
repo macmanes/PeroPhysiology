@@ -49,12 +49,15 @@ source("functions.R")
 
 ```{r import data message=FALSE, warning=FALSE, echo=FALSE}
 
+#this is the baseline part of rep1
 chunk5 <- bring_in_data("chunk5.csv")
 chunk5_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk5_activity.csv", n_max=dim(chunk5)[1])
 
+#this is for room temperature
 chunk1 <- bring_in_data("chunk1.csv")
 chunk1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk1_activity.csv", n_max=dim(chunk1)[1])
 
+#this is the physiology data for the dehydration part of the experiment
 ldr1 <- bring_in_data("lowfat_dehydrated_rep1.csv")
 ldr1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/lowfat_dehydrated_rep1_activity.csv", n_max=dim(ldr1)[1])
 ```
