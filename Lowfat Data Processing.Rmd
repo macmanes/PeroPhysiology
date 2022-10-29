@@ -202,7 +202,7 @@ day1_rep1 <- interval(rep1_water_removal, rep1_water_removal + days(1))
 day2_rep1 <- interval(rep1_water_removal + days(1), rep1_water_removal + days(2))
 day3_rep1 <- interval(rep1_water_removal + days(2), rep1_water_removal + days(3))
 
-rep2_water_removal <- ymd_hms("2022-10-26 11:59:59", tz="EST")
+rep2_water_removal <- ymd_hms("2022-10-31 11:59:59", tz="EST")
 baseline_rep2 <- interval(rep2_water_removal - days(3), rep2_water_removal)
 day1_rep2 <- interval(rep2_water_removal, rep2_water_removal + days(1))
 day2_rep2 <- interval(rep2_water_removal + days(1), rep2_water_removal + days(2))
