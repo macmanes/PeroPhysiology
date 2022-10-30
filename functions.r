@@ -52,27 +52,11 @@ bring_in_data <- function(data_file)
              ifelse(Animal == 4, mouse_metadata_rep1$animal_id[mouse_metadata_rep1$cage == 4][1],
              ifelse(Animal == 5, mouse_metadata_rep1$animal_id[mouse_metadata_rep1$cage == 5][1],
              ifelse(Animal == 6, mouse_metadata_rep1$animal_id[mouse_metadata_rep1$cage == 6][1], NA)))))))) 
-    #mutate(H2Omg_edit = 
-             #ifelse(hour(StartTime) == 8, H2Omg,
-             #ifelse(hour(StartTime) == 7, H2Omg,
-             #ifelse(hour(StartTime) == 9, H2Omg,
-             #ifelse(hour(StartTime) == 10, H2Omg,
-             #ifelse(hour(StartTime) == 19, H2Omg,
-             #ifelse(hour(StartTime) == 20, H2Omg,
-             #ifelse(hour(StartTime) == 21, H2Omg,
-             #ifelse(hour(StartTime) == 22, H2Omg,
-             #ifelse(hour(StartTime) %!in% c(7,8,9,10,20,21,22,19), H2Omg, NA)))))))))) %>%
-    #mutate_at("H2Omg_edit", as.numeric)
   
   target <- c(0,1,2,3,4,5,6,7)
   cages <- raw %>% filter(Animal %in% target)
   
-  
-  #start_time <- ymd_hms(subset[[5]][1])
-  #begin_experiment <- start_time + dhours(2)
-  #end_time <- begin_experiment + dhours(72)
-  #filtered <- subset %>% filter(raw$DateTime >= begin_experiment & raw$DateTime <= end_time)
-  
+
   
   return(cages)
 }
