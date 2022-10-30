@@ -18,6 +18,7 @@ summary(dd)
 ## make continuous time variable
 library(timeDate)
 dd$doy <- dayOfYear(as.timeDate(dd$date))
+dd$time_in_S <- period_to_seconds(hms(dd$time)) 
 dd$ctime <- dd$doy + dd$time_in_S / (24*60*60)
 summary(dd$ctime)
 
@@ -27,27 +28,23 @@ summary(dd$time_in_D)
 
 
 #  Plotting the daily cycle:
-par(mfrow=c(1,2))
+par(mfrow=c(2,2))
 with(dd, plot(time_in_D, EE,main = "Circadian Rhythm: Energy Expenditure"))
-with(dd, plot(time_in_D, H2Omg,main = "Circadian Rhythm: Water Retention"))
-with(dd, plot(time_in_D, RQ))
+with(dd, plot(time_in_D, H2Omg,main = "Circadian Rhythm: Water Loss"))
+with(dd, plot(time_in_D, RQ, main = "Circadian Rhythm: RQ"))
 
 # Plotting the daily cycle by experiment
 library(ggplot2)
 ggplot(dd, aes(x = time_in_D, y = EE)) +
   geom_point()+ 
-  facet_wrap(~experiment)
+  facet_wrap(~experiment_day, drop=T)
 ggplot(dd, aes(x = time_in_D, y = H2Omg)) +
   geom_point()+ 
-  facet_wrap(~experiment)
+  facet_wrap(~experiment_day)
 ggplot(dd, aes(x = time_in_D, y = RQ)) +
   geom_point()+ 
-  facet_wrap(~experiment)
+  facet_wrap(~experiment_day)
 
-# Correct the mistake of animal 6
-dd$Animal_ID[dd$Animal_ID == "6" & dd$doy > 100] <- "6a"
-unique(dd$Animal_ID)
-table(dd$Animal_ID)   #  now looks good!
 
 # make Animal_ID a factor:
 dd$ID <- as.factor(dd$Animal_ID)
@@ -69,12 +66,12 @@ for (i in 1:length(ind) ){  # i = 1
 table(dd$startexp)
 
 # printing out the design
-design <- matrix("m",nrow=1, ncol=3)
-colnames(design) <- c("sex","date","ID")
+design <- matrix("m",nrow=1, ncol=4)
+colnames(design) <- c("sex","date","ID", "experiment_day")
 
-design <- subset(dd,select=c("sex","date","ID"),subset = (dd$ID == ind[1]))[1,]
+design <- subset(dd,select=c("sex","date","ID", "experiment_day"),subset = (dd$ID == ind[1]))[1,]
 for (i in 2:length(ind) ){ # i=2
-  ddsub <- subset(dd,select=c("sex","date","ID"),subset = (dd$ID == ind[i]))[1,]
+  ddsub <- subset(dd,select=c("sex","date","ID", "experiment_day"),subset = (dd$ID == ind[i]))[1,]
   design <- rbind(design, as.vector(ddsub[1,]) )
 }
 
@@ -132,14 +129,19 @@ library(mgcv)
 ## note:  startexp == batches
 
 library(MASS)
-M1 <- glmmPQL(H2Omg ~ experiment*Sex, random = list(startexp= ~1), data = dd, family = gaussian)
+M1 <- glmmPQL(H2Omg ~ experiment_day*Sex, random = list(startexp= ~1), data = dd, family = gaussian)
 # not the best model
 
 #########################################
 ### Now include smooth terms using gamm
 #########################################
 
-M2 <- gamm(H2Omg ~ experiment+Sex + s(time.exp,k=3) + s(time_in_D, bs="cc") + s(EE) + s(RQ), data = dd,
+
+gamm(H2Omg ~ experiment_day+sex + s(ctime.exp) + s(time_in_D, bs="cc") + s(as.numeric(EE)) + s(RQ), data = dd,
+     random = list(startexp = ~1, ID = ~1|startexp)  )
+
+
+M2 <- gamm(H2Omg ~ experiment_day+sex + s(ctime.exp) + s(time_in_D, bs="cc") + s(as.numeric(EE)) + s(RQ), data = dd,
            random = list(startexp = ~1, ID = ~1|startexp)  )
 summary(M2$gam)  
 #  summary(M2$lme)   #  detailed report about component standard deviations

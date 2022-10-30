@@ -25,7 +25,9 @@ library(dplyr)
 library(pwr)
 library(Cairo)
 library(ggpattern)
-library(hms)
+library(timeDate)
+library(mgcv)
+library(MASS)
 ```
 
 
@@ -58,7 +60,7 @@ chunk1 <- bring_in_data("chunk1.csv")
 chunk1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk1_activity.csv", n_max=dim(chunk1)[1])
 
 #this is the physiology data for the dehydration part of the experiment
-ldr1 <- bring_in_data("lowfat_dehydrated_rep1.csv")
+ldr1www <- bring_in_data("lowfat_dehydrated_rep1.csv")
 ldr1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/lowfat_dehydrated_rep1_activity.csv", n_max=dim(ldr1)[1])
 ```
 
@@ -202,7 +204,7 @@ day1_rep1 <- interval(rep1_water_removal, rep1_water_removal + days(1))
 day2_rep1 <- interval(rep1_water_removal + days(1), rep1_water_removal + days(2))
 day3_rep1 <- interval(rep1_water_removal + days(2), rep1_water_removal + days(3))
 
-rep2_water_removal <- ymd_hms("2022-10-31 11:59:59", tz="EST")
+rep2_water_removal <- ymd_hms("2022-10-30 11:59:59", tz="EST")
 baseline_rep2 <- interval(rep2_water_removal - days(3), rep2_water_removal)
 day1_rep2 <- interval(rep2_water_removal, rep2_water_removal + days(1))
 day2_rep2 <- interval(rep2_water_removal + days(1), rep2_water_removal + days(2))
@@ -212,10 +214,21 @@ baseline_temp_rep1 <- interval(rep1_water_removal - days(30), rep1_water_removal
 baseline_temp_rep2 <- interval(rep2_water_removal - days(30), rep2_water_removal)
 ```
 
+
+```{r add metadata}
+lowfat_dehydration_noOL_rep1 <- lowfat_dehydration_noOL_rep1 %>%
+    add_column(experiment_day = NA)
+
+
+lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% baseline_rep1 == "TRUE"] <- "baseline"
+lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day1_rep1 == "TRUE"] <- "day1"
+lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day2_rep1 == "TRUE"] <- "day2"
+lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day3_rep1 == "TRUE"] <- "day3"
+write.csv(lowfat_dehydration_noOL_rep1, "lowfat_dehydration.csv", row.names = FALSE)
+
+```
+
 ```{r merge reps for differert days}
-
-
-
 baseline_temps <-
   rbind(mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within%  baseline_temp_rep1,], mouse_metadata_rep2[mouse_metadata_rep2$DateTime %within% baseline_temp_rep2,] )
 
