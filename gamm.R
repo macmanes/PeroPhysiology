@@ -3,11 +3,11 @@
 ###  3/21/21  using gamm
 ###############################
 
-load("diet_all.Rdata")
-summary(diet_all)
+
+summary(lowfat_dehydration_noOL_rep1)
 
 # Using it as a data frame - use a short name for convenience
-dd <- as.data.frame(diet_all);   rm(diet_all)
+dd <- as.data.frame(lowfat_dehydration_noOL_rep1);   rm(diet_all)
 
 #  Creating nominal categorical variables (Sex,experiment )
 index <- c(1,8)
@@ -17,7 +17,7 @@ summary(dd)
 
 ## make continuous time variable
 library(timeDate)
-dd$doy <- dayOfYear(as.timeDate(dd$StartDate))
+dd$doy <- dayOfYear(as.timeDate(dd$date))
 dd$ctime <- dd$doy + dd$time_in_S / (24*60*60)
 summary(dd$ctime)
 
@@ -69,12 +69,12 @@ for (i in 1:length(ind) ){  # i = 1
 table(dd$startexp)
 
 # printing out the design
-design <- matrix("m",nrow=1, ncol=4)
-colnames(design) <- c("Sex","experiment","StartDate","ID")
+design <- matrix("m",nrow=1, ncol=3)
+colnames(design) <- c("sex","date","ID")
 
-design <- subset(dd,select=c("Sex","experiment","StartDate","ID"),subset = (dd$ID == ind[1]))[1,]
+design <- subset(dd,select=c("sex","date","ID"),subset = (dd$ID == ind[1]))[1,]
 for (i in 2:length(ind) ){ # i=2
-  ddsub <- subset(dd,select=c("Sex","experiment","StartDate","ID"),subset = (dd$ID == ind[i]))[1,]
+  ddsub <- subset(dd,select=c("sex","date","ID"),subset = (dd$ID == ind[i]))[1,]
   design <- rbind(design, as.vector(ddsub[1,]) )
 }
 
@@ -100,7 +100,7 @@ cbp2 <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
           "#F0E442", "#0072B2", "#D55E00")
 
 library(ggplot2)
-ggplot(data = dd, aes(ctime,H2Omg)) +
+ggplot(data = dd, aes(time,H2Omg)) +
   geom_line(aes(colour = ID),show.legend = F) +
   scale_colour_manual(values=rep(cbp2,8)) +
   facet_wrap(~startexp, scales = "free_x")
@@ -117,7 +117,7 @@ levs <- levels(dd$startexp)
 # library(wesanderson)
 
 ddd <- subset(dd,startexp == levs[1])
-ggplot(data = ddd, aes(ctime,H2Omg)) +
+ggplot(data = ddd, aes(time,H2Omg)) +
   geom_line(aes(color=ID)) +
   scale_colour_manual(values=cbp2)
 
@@ -139,7 +139,7 @@ M1 <- glmmPQL(H2Omg ~ experiment*Sex, random = list(startexp= ~1), data = dd, fa
 ### Now include smooth terms using gamm
 #########################################
 
-M2 <- gamm(H2Omg ~ experiment+Sex + s(ctime.exp,k=3) + s(time_in_D, bs="cc") + s(EE) + s(RQ), data = dd,
+M2 <- gamm(H2Omg ~ experiment+Sex + s(time.exp,k=3) + s(time_in_D, bs="cc") + s(EE) + s(RQ), data = dd,
            random = list(startexp = ~1, ID = ~1|startexp)  )
 summary(M2$gam)  
 #  summary(M2$lme)   #  detailed report about component standard deviations

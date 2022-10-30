@@ -311,7 +311,7 @@ temperatures <- ggplot(data = baseline_temps,aes(x=as.POSIXct(time),y=body_temp)
   geom_point(data = chunk1, aes(x=as.POSIXct(time), y=Deg_C + coeff), size=1, color="black", shape=4)+
      labs(x = "")+
   theme_classic()+
-  geom_smooth(method='gam', se = FALSE, aes(color = "Baseline"))+
+  geom_smooth(method='gam', se = FALSE, aes(color = "Baseline"), span=0.2)+
   geom_smooth(data = day1_temps, method='gam', se = FALSE, aes(color = "Day 1"))+
   geom_smooth(data = day2_temps, method='gam', se = FALSE, aes(color = "Day 2"))+
   geom_smooth(data = day3_temps, method='gam', se = FALSE, aes(color = "Day 3"))+
