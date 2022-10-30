@@ -25,11 +25,9 @@ bring_in_data <- function(data_file)
     mutate(EE = 0.06*(3.941*VO2 + 1.106*VCO2)) %>% 
     mutate(RQ = VCO2/VO2) %>%
     rename(c("StartTime" = "time", "StartDate" = "date")) %>%
-    #mutate(time = format(time, "%H:%M:%S", tz="EST")) %>%
     mutate(date, date = as.POSIXlt(date, format = "%d-%b-%y", tz="EST")) %>%
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
-    #mutate(DateTime = as.POSIXlt(DateTime), tz="EST")  %>%
-    mutate(DateTime, DateTime = as.POSIXlt(ymd_hms(DateTime), tz="EST")) %>%
+    #mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1)) %>%
     mutate(weight = 
              ifelse(Animal == 0, mean(mouse_metadata_rep1$weight[mouse_metadata_rep1$cage == 0], na.rm = TRUE), 
              ifelse(Animal == 1, mean(mouse_metadata_rep1$weight[mouse_metadata_rep1$cage == 1], na.rm = TRUE),

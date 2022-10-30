@@ -145,6 +145,9 @@ M2 <- gamm(H2Omg ~ experiment_day+sex + s(ctime.exp) + s(time_in_D, bs="cc") + s
            random = list(startexp = ~1, ID = ~1|startexp)  )
 summary(M2$gam)  
 #  summary(M2$lme)   #  detailed report about component standard deviations
+gam.check(M2$gam)
+
+
 
 par(mfrow=c(2,2),mar = c(4,4,1,1),oma=c(0,0,3,0))
 plot(M2$gam,scale = 0,cex = .7,col = "red", residuals = T,shade = T, shade.col = "blue")

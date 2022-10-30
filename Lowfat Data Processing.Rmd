@@ -53,14 +53,17 @@ source("functions.R")
 
 #this is the baseline part of rep1
 chunk5 <- bring_in_data("chunk5.csv")
+chunk5 <- chunk5 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 chunk5_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk5_activity.csv", n_max=dim(chunk5)[1])
 
 #this is for room temperature
 chunk1 <- bring_in_data("chunk1.csv")
+chunk1 <- chunk1 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 chunk1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk1_activity.csv", n_max=dim(chunk1)[1])
 
 #this is the physiology data for the dehydration part of the experiment
-ldr1www <- bring_in_data("lowfat_dehydrated_rep1.csv")
+ldr1 <- bring_in_data("lowfat_dehydrated_rep1.csv")
+ldr1 <- ldr1 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 ldr1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/lowfat_dehydrated_rep1_activity.csv", n_max=dim(ldr1)[1])
 ```
 
@@ -82,7 +85,7 @@ chunk5 <- chunk5 %>%
 baseline <- c(7)
 baseline_cage <- chunk5 %>% 
   filter(Animal %in% baseline)
-baseline_cage <- baseline_cage %>%  mutate(DateTime = round_date(ymd_hms(as.POSIXct(baseline_cage$DateTime)), unit="min"))
+
 
 #subset out animal data
 target <- c(0,1,2,3,4,5,6)
@@ -90,8 +93,7 @@ cages <- chunk5 %>%
   filter(Animal %in% target)
 
 cages <- cages %>% 
-  mutate(DateTime = round_date(ymd_hms(as.POSIXct(cages$DateTime)), unit="min")) %>%
-  select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
+  dplyr::select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
          H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
          SD_H2Omg, SS4_FR, H2O_WVP, BP)
 
@@ -112,7 +114,6 @@ chunk1 <- chunk1 %>%
 baseline <- c(7)
 baseline_cage <- chunk1 %>% 
   filter(Animal %in% baseline)
-baseline_cage <- baseline_cage %>%  mutate(DateTime = round_date(ymd_hms(as.POSIXct(baseline_cage$DateTime)), unit="min"))
 
 #subset out animal data
 target <- c(0,1,2,3,4,5,6)
@@ -120,8 +121,7 @@ cages <- chunk1 %>%
   filter(Animal %in% target)
 
 cages <- cages %>% 
-  mutate(DateTime = round_date(ymd_hms(as.POSIXct(cages$DateTime)), unit="min")) %>%
-  select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
+  dplyr::select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
          H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
          SD_H2Omg, SS4_FR, H2O_WVP, BP)
 
@@ -140,7 +140,7 @@ ldr1 <- ldr1 %>%
 baseline <- c(7)
 baseline_cage <- ldr1 %>% 
   filter(Animal %in% baseline)
-baseline_cage <- baseline_cage %>%  mutate(DateTime = round_date(ymd_hms(as.POSIXct(baseline_cage$DateTime)), unit="min"))
+
 
 #subset out animal data
 target <- c(0,1,2,3,4,5,6)
@@ -148,8 +148,7 @@ cages <- ldr1 %>%
   filter(Animal %in% target)
 
 cages <- cages %>% 
-  mutate(DateTime = round_date(ymd_hms(as.POSIXct(cages$DateTime)), unit="min")) %>%
-  select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
+  dplyr::select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
          H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
          SD_H2Omg, SS4_FR, H2O_WVP, BP)
 
@@ -166,7 +165,7 @@ varname_list = c("EE_OLs","RQ_OLs","VO2_OLs","VCO2_OLs","H2O_OLs", "Activity_OLs
 for (DV in dependent_variables){
   print(DV)
     model <- lm(as.formula(paste0(DV, " ~ Animal_ID")), data = cages)
-  model.metrics <- augment(model) %>% select(-.hat, -.sigma, -.fitted)
+  model.metrics <- augment(model) %>% dplyr::select(-.hat, -.sigma, -.fitted)
   summ <- model.metrics %>% filter(abs(.std.resid) > 2) %>% as.data.frame()
 
     OL_list = c()
@@ -380,7 +379,7 @@ activity <- ggplot(data = baseline,aes(x=as.POSIXct(time),y=Activity)) +
   geom_smooth(data = day3, method='gam', se = FALSE, aes(color = "Day 3"))+
   labs(x = "", y = "Activity")+
   guides(alpha = "none")+
-scale_colour_manual(name="Dehydration",values=cols, guide="none")
+scale_colour_manual(name="Dehydration",values=cols)
 activity
 
 temperatures/activity/EE
