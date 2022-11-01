@@ -39,7 +39,7 @@ mouse_metadata_rep1 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     mutate(DateTime = as.POSIXlt(DateTime), tz="EST")
 
-mouse_metadata_rep2 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/mouse_data_rep2.csv",skip_empty_rows=TRUE) %>%
+mouse_metadata_rep2 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/lowfat_dehydration_temps_rep2.csv",skip_empty_rows=TRUE) %>%
     mutate(date, date = as.Date(date, format = "%d-%m-%y", tz="EST")) %>%
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     mutate(DateTime = as.POSIXlt(DateTime), tz="EST")
@@ -401,7 +401,7 @@ temperatures <- ggplot(data = baseline_temps,aes(x=as.POSIXct(time),y=body_temp)
   annotate("rect", xmin = as.POSIXct("1970-01-01 21:00:00", tz="UTC"), 
            xmax = as.POSIXct("1970-01-01 23:59:59", tz="UTC"), 
            ymin = -Inf, ymax = Inf, fill="grey84") +
-  #geom_point(aes(color = "Baseline", alpha=0.1))+
+  geom_point(aes(color = "Baseline", alpha=0.1))+
   geom_point(data = day1_temps, aes(color="Day 1", alpha=0.2))+
   geom_point(data = day2_temps, aes(color="Day 2", alpha=0.2))+
   geom_point(data = day3_temps, aes(color="Day 3", alpha=0.2))+
