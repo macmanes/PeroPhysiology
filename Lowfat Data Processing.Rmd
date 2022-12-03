@@ -1,13 +1,13 @@
 ---
 title: "dehydration"
 author: "MacManes"
-date: "9/8/2022"
+date: "12/3/2022"
 output: html_document
 ---
 
 bring in libs
 
-```{r echo=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 library(devtools)
 library(tidyverse)
 library(lubridate)
@@ -35,9 +35,10 @@ library(dplyr)
 setwd("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/R/lowfat_dehydration/")
 path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/"
 source("functions.R")
-
+```
 
 ```{r bring in metadata and weights}
+
 mouse_metadata_rep1 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/mouse_data_rep1.csv",skip_empty_rows=TRUE) %>%
     mutate(date, date = as.Date(date, format = "%d-%m-%y", tz="EST")) %>%
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
@@ -48,15 +49,18 @@ mouse_metadata_rep2 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     mutate(DateTime = as.POSIXlt(DateTime), tz="EST")
 
-
-mouse_metadata_rep3 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep3/lowfat_dehydration_temps_rep3.csv",skip_empty_rows=TRUE) %>%
-    mutate(date, date = as.Date(date, format = "%d-%m-%y", tz="EST")) %>%
-    unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
-    mutate(DateTime = as.POSIXlt(DateTime), tz="EST")
+mouse_metadata_rep3 <- read_excel("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/mouse_data.xlsx", 
+    sheet = "rep3_new", col_types = c("text", 
+        "numeric", "numeric", "text", "text", 
+        "numeric", "text", "text", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "text"))
 ```
 
 
-```{r import data message=FALSE, warning=FALSE, echo=FALSE}
+```{r import data rep 1 message=FALSE, warning=FALSE, echo=FALSE}
 
 #this is the baseline part of rep1
 path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/"
@@ -73,6 +77,10 @@ chunk1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/low
 ldr1 <- bring_in_data_rep1("lowfat_dehydrated_rep1.csv")
 ldr1 <- ldr1 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 ldr1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/lowfat_dehydrated_rep1_activity.csv", n_max=dim(ldr1)[1])
+```
+
+
+```{r import data rep 2 message=FALSE, warning=FALSE, echo=FALSE}
 
 #this is the physiology data for the dehydration part of the experiment rep2
 path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/"
@@ -175,7 +183,7 @@ cages <- cages %>%
 
 ldr1 <- cages
 
-cages <- rbind(ldr1, chunk5)
+rep1_cages <- rbind(ldr1, chunk5)
 
 #here is the outlier removal part
 
@@ -185,7 +193,7 @@ varname_list = c("EE_OLs","RQ_OLs","VO2_OLs","VCO2_OLs","H2O_OLs", "Activity_OLs
 
 for (DV in dependent_variables){
   print(DV)
-    model <- lm(as.formula(paste0(DV, " ~ Animal_ID")), data = cages)
+    model <- lm(as.formula(paste0(DV, " ~ Animal_ID")), data = rep1_cages)
   model.metrics <- augment(model) %>% dplyr::select(-.hat, -.sigma, -.fitted)
   summ <- model.metrics %>% filter(abs(.std.resid) > 2) %>% as.data.frame()
 
@@ -194,7 +202,7 @@ for (DV in dependent_variables){
   for (each_outlier_row in 1:nrow(summ)){
     this_weight <- summ[each_outlier_row, "Animal_ID"]
     this_DV  <- summ[each_outlier_row, DV]
-    OL_list <- c(OL_list, (which(cages$Animal_ID == this_weight & cages[DV] == this_DV)))
+    OL_list <- c(OL_list, (which(rep1_cages$Animal_ID == this_weight & rep1_cages[DV] == this_DV)))
 
   }
   print(OL_list)
@@ -205,12 +213,14 @@ for (DV in dependent_variables){
 masterlist <- c(OL_list_EE, OL_list_RQ, OL_list_VO2, OL_list_VCO2, OL_list_H2Omg, OL_list_Activity)
 masterlist_noDup <- unique(masterlist)
 
-lowfat_dehydration_noOL_rep1 <- cages[-c(masterlist_noDup),]
-#write.csv(lowfat_dehydration_noOL_rep1, "lowfat_dehydration.csv", row.names = FALSE)
-
+lowfat_dehydration_noOL_rep1 <- rep1_cages[-c(masterlist_noDup),]
 ```
 
 ```{r manipulate data REP2}
+
+
+###################ldr2
+
 
 #make activity data non-cumulative
 ldr2 <- ldr2 %>% 
@@ -235,6 +245,64 @@ cages <- cages %>%
          H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
          SD_H2Omg, SS4_FR, H2O_WVP, BP)
 
+ldr2_cages <- cages
+
+###################ldr2a
+
+#make activity data non-cumulative
+ldr2a <- ldr2a %>% 
+  add_column(MOD_ADX = ldr2a_act$MOD_ADX) %>%
+  mutate(Activity = MOD_ADX - lag(MOD_ADX, default = 0))
+
+
+
+#subset out baseline data
+baseline <- c(7)
+baseline_cage <- ldr2a %>% 
+  filter(Animal %in% baseline)
+
+
+#subset out animal data
+target <- c(0,1,2,3,4,5,6)
+cages <- ldr2a %>% 
+  filter(Animal %in% target)
+
+cages <- cages %>% 
+  dplyr::select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
+         H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
+         SD_H2Omg, SS4_FR, H2O_WVP, BP)
+
+ldr2a_cages <- cages
+
+###################ldr2b
+
+#make activity data non-cumulative
+ldr2b <- ldr2b %>% 
+  add_column(MOD_ADX = ldr2b_act$MOD_ADX) %>%
+  mutate(Activity = MOD_ADX - lag(MOD_ADX, default = 0))
+
+
+
+#subset out baseline data
+baseline <- c(7)
+baseline_cage <- ldr2b %>% 
+  filter(Animal %in% baseline)
+
+
+#subset out animal data
+target <- c(0,1,2,3,4,5,6)
+cages <- ldr2b %>% 
+  filter(Animal %in% target)
+
+cages <- cages %>% 
+  dplyr::select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE, H2Omg, 
+         H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
+         SD_H2Omg, SS4_FR, H2O_WVP, BP)
+
+ldr2b_cages <- cages
+
+rep2_cages <- rbind(ldr2_cages, ldr2a_cages, ldr2b_cages)
+
 #here is the outlier removal part
 
 count = 1
@@ -243,7 +311,7 @@ varname_list = c("EE_OLs","RQ_OLs","VO2_OLs","VCO2_OLs","H2O_OLs", "Activity_OLs
 
 for (DV in dependent_variables){
   print(DV)
-    model <- lm(as.formula(paste0(DV, " ~ Animal_ID")), data = cages)
+    model <- lm(as.formula(paste0(DV, " ~ Animal_ID")), data = rep2_cages)
   model.metrics <- augment(model) %>% dplyr::select(-.hat, -.sigma, -.fitted)
   summ <- model.metrics %>% filter(abs(.std.resid) > 2) %>% as.data.frame()
 
@@ -252,7 +320,7 @@ for (DV in dependent_variables){
   for (each_outlier_row in 1:nrow(summ)){
     this_weight <- summ[each_outlier_row, "Animal_ID"]
     this_DV  <- summ[each_outlier_row, DV]
-    OL_list <- c(OL_list, (which(cages$Animal_ID == this_weight & cages[DV] == this_DV)))
+    OL_list <- c(OL_list, (which(rep2_cages$Animal_ID == this_weight & rep2_cages[DV] == this_DV)))
 
   }
   print(OL_list)
@@ -263,16 +331,9 @@ for (DV in dependent_variables){
 masterlist <- c(OL_list_EE, OL_list_RQ, OL_list_VO2, OL_list_VCO2, OL_list_H2Omg, OL_list_Activity)
 masterlist_noDup <- unique(masterlist)
 
-lowfat_dehydration_noOL_rep2 <- cages[-c(masterlist_noDup),]
+lowfat_dehydration_noOL_rep2 <- rep2_cages[-c(masterlist_noDup),]
 ```
 
-
-
-```{r rename and merge files}
-#should only need this for rep1
-cages <- rbind(chunk5, cages)
-lowfat_dehydration_noOL <- lowfat_dehydration_noOL_rep1
-```
 
 ```{r make experimental intervals}
 rep1_water_removal <- ymd_hms("2022-10-06 11:59:59", tz="EST")
