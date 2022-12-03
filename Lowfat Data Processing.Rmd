@@ -34,6 +34,10 @@ library(dplyr)
 ```{r create environment}
 setwd("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/R/lowfat_dehydration/")
 path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/"
+source("functions.R")
+
+
+```{r bring in metadata and weights}
 mouse_metadata_rep1 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/mouse_data_rep1.csv",skip_empty_rows=TRUE) %>%
     mutate(date, date = as.Date(date, format = "%d-%m-%y", tz="EST")) %>%
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
@@ -44,46 +48,44 @@ mouse_metadata_rep2 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     mutate(DateTime = as.POSIXlt(DateTime), tz="EST")
 
-test_day1_temps <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/test_day1_temps.csv", 
-    col_types = cols(date = col_date(format = "%m/%d/%Y"), 
-        time = col_time(format = "%H:%M:%S"))) %>%
+
+mouse_metadata_rep3 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep3/lowfat_dehydration_temps_rep3.csv",skip_empty_rows=TRUE) %>%
     mutate(date, date = as.Date(date, format = "%d-%m-%y", tz="EST")) %>%
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     mutate(DateTime = as.POSIXlt(DateTime), tz="EST")
-
-source("functions.R")
 ```
 
 
 ```{r import data message=FALSE, warning=FALSE, echo=FALSE}
 
 #this is the baseline part of rep1
-chunk5 <- bring_in_data("chunk5.csv")
+path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/"
+chunk5 <- bring_in_data_rep1("chunk5.csv")
 chunk5 <- chunk5 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 chunk5_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk5_activity.csv", n_max=dim(chunk5)[1])
 
 #this is for room temperature
-chunk1 <- bring_in_data("chunk1.csv")
+chunk1 <- bring_in_data_rep1("chunk1.csv")
 chunk1 <- chunk1 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 chunk1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk1_activity.csv", n_max=dim(chunk1)[1])
 
 #this is the physiology data for the dehydration part of the experiment rep1
-ldr1 <- bring_in_data("lowfat_dehydrated_rep1.csv")
+ldr1 <- bring_in_data_rep1("lowfat_dehydrated_rep1.csv")
 ldr1 <- ldr1 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 ldr1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/lowfat_dehydrated_rep1_activity.csv", n_max=dim(ldr1)[1])
 
-path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/"
 #this is the physiology data for the dehydration part of the experiment rep2
-ldr2a <- bring_in_data("lowfat_dehydrated_41to66_rep2.csv")
+path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/"
+ldr2a <- bring_in_data_rep2("lowfat_dehydrated_41to66_rep2.csv")
 ldr2a <- ldr2a %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 ldr2a_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/lowfat_dehydrated_41to66_rep2_activity.csv", n_max=dim(ldr2a)[1])
 
-ldr2b <- bring_in_data("lowfat_dehydrated_0to10_rep2.csv")
+ldr2b <- bring_in_data_rep2("lowfat_dehydrated_0to10_rep2.csv")
 ldr2b <- ldr2b %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 ldr2b_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/lowfat_dehydrated_0to10_rep2_activity.csv", n_max=dim(ldr2b)[1])
 
 
-ldr2 <- bring_in_data("lowfat_dehydrated_0to3_rep2.csv")
+ldr2 <- bring_in_data_rep2("lowfat_dehydrated_0to3_rep2.csv")
 ldr2 <- ldr2 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 ldr2_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/lowfat_dehydrated_0to3_rep2_activity.csv", n_max=dim(ldr2)[1])
 ```
@@ -91,8 +93,6 @@ ldr2_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfa
 ```{r manipulate data REP1}
 
 ###################CHUNK5
-
-
 
 #make activity data non-cumulative
 chunk5 <- chunk5 %>% 
@@ -287,8 +287,17 @@ day1_rep2 <- interval(rep2_water_removal, rep2_water_removal + days(1))
 day2_rep2 <- interval(rep2_water_removal + days(1), rep2_water_removal + days(2))
 day3_rep2 <- interval(rep2_water_removal + days(2), rep2_water_removal + days(3))
 
+rep3_water_removal <- ymd_hms("2022-12-03 11:59:59", tz="EST")
+baseline_rep3 <- interval(rep3_water_removal - days(3), rep3_water_removal)
+day1_rep3 <- interval(rep3_water_removal, rep3_water_removal + days(1))
+day2_rep3 <- interval(rep3_water_removal + days(1), rep3_water_removal + days(2))
+day3_rep3 <- interval(rep3_water_removal + days(2), rep3_water_removal + days(3))
+
+
 baseline_temp_rep1 <- interval(rep1_water_removal - days(30), rep1_water_removal)
 baseline_temp_rep2 <- interval(rep2_water_removal - days(30), rep2_water_removal)
+baseline_temp_rep3 <- interval(rep3_water_removal - days(30), rep3_water_removal)
+
 ```
 
 
