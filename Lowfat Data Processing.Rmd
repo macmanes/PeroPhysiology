@@ -7,7 +7,7 @@ output: html_document
 
 bring in libs
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
+```{r import libraries message=FALSE, warning=FALSE, echo=FALSE}
 library(devtools)
 library(tidyverse)
 library(lubridate)
@@ -37,7 +37,7 @@ path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration
 source("functions.R")
 ```
 
-```{r bring in metadata and weights}
+```{r bring in metadata and weights message=FALSE, warning=FALSE, echo=FALSE}
 
 mouse_metadata_rep1 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/mouse_data_rep1.csv",skip_empty_rows=TRUE) %>%
     mutate(date, date = as.Date(date, format = "%d-%m-%y", tz="EST")) %>%
@@ -486,7 +486,7 @@ Make plots
 ```{r make plots}
 
 coeff <- 0
-temperatures <- ggplot(data = test_day1_temps,aes(x=as.POSIXct(time),y=body_temp)) +
+temperatures <- ggplot(data = baseline_temps,aes(x=as.POSIXct(time),y=body_temp)) +
   scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
   annotate("rect", xmin = as.POSIXct("1970-01-01 00:00:01", tz="UTC"), 
            xmax = as.POSIXct("1970-01-01 06:00:00", tz="UTC"), 
