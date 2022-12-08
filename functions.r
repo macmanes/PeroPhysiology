@@ -21,7 +21,8 @@ bring_in_data_rep1 <- function(data_file)
   
 
     raw <- raw %>% 
-    mutate(EE = 0.06*(3.941*VO2 + 1.106*VCO2)) %>% 
+    mutate(EE_KCalH = 0.06*(3.941*VO2 + 1.106*VCO2)) %>%
+    mutate(EE_kJH = 4.1868*0.06*(3.941*VO2 + 1.106*VCO2)) %>%
     mutate(RQ = VCO2/VO2) %>%
     rename(c("StartTime" = "time", "StartDate" = "date")) %>%
     mutate(date, date = as.POSIXlt(date, format = "%d-%b-%y", tz="EST")) %>%
@@ -71,7 +72,8 @@ bring_in_data_rep2 <- function(data_file)
   
   
   raw <- raw %>% 
-    mutate(EE = 0.06*(3.941*VO2 + 1.106*VCO2)) %>% 
+    mutate(EE_KCalH = 0.06*(3.941*VO2 + 1.106*VCO2)) %>%
+    mutate(EE_kJH = 4.1868*0.06*(3.941*VO2 + 1.106*VCO2)) %>%
     mutate(RQ = VCO2/VO2) %>%
     rename(c("StartTime" = "time", "StartDate" = "date")) %>%
     mutate(date, date = as.POSIXlt(date, format = "%d-%b-%y", tz="EST")) %>%
@@ -123,7 +125,8 @@ bring_in_data_rep3 <- function(data_file)
   
   
   raw <- raw %>% 
-    mutate(EE = 0.06*(3.941*VO2 + 1.106*VCO2)) %>% 
+    mutate(EE_KCalH = 0.06*(3.941*VO2 + 1.106*VCO2)) %>%
+    mutate(EE_kJH = 4.1868*0.06*(3.941*VO2 + 1.106*VCO2)) %>%
     mutate(RQ = VCO2/VO2) %>%
     rename(c("StartTime" = "time", "StartDate" = "date")) %>%
     mutate(date, date = as.POSIXlt(date, format = "%d-%b-%y", tz="EST")) %>%
