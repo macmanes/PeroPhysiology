@@ -37,13 +37,13 @@ bring_in_data_rep1 <- function(data_file)
              ifelse(Animal == 5, mean(mouse_metadata_rep1$weight[mouse_metadata_rep1$cage == 5], na.rm = TRUE),
              ifelse(Animal == 6, mean(mouse_metadata_rep1$weight[mouse_metadata_rep1$cage == 6], na.rm = TRUE), NA)))))))) %>% 
       mutate(sex = 
-               ifelse(Animal == 0, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 0])[1], 
-               ifelse(Animal == 1, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 1])[1],
-               ifelse(Animal == 2, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 2])[1],
-               ifelse(Animal == 3, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 3])[1],
-               ifelse(Animal == 4, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 4])[1],
-               ifelse(Animal == 5, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 5])[1],
-               ifelse(Animal == 6, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 6])[1], NA)))))))) %>% 
+             ifelse(Animal == 0, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 0])[1], 
+             ifelse(Animal == 1, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 1])[1],
+             ifelse(Animal == 2, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 2])[1],
+             ifelse(Animal == 3, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 3])[1],
+             ifelse(Animal == 4, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 4])[1],
+             ifelse(Animal == 5, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 5])[1],
+             ifelse(Animal == 6, na.omit(mouse_metadata_rep1$sex[mouse_metadata_rep1$cage == 6])[1], NA)))))))) %>% 
     mutate(Animal_ID = 
              ifelse(Animal == 0, mouse_metadata_rep1$animal_id[mouse_metadata_rep1$cage == 0][1], 
              ifelse(Animal == 1, mouse_metadata_rep1$animal_id[mouse_metadata_rep1$cage == 1][1],
@@ -175,14 +175,22 @@ bring_in_temps_rep3 <- function(data_file)
     mutate(date, date = as.Date(date, format = "%Y-%m-%f", tz="EST")) %>%
     unite("DateTime", date:time, remove = FALSE, sep =  " ") %>%
     mutate(DateTime = as.POSIXlt(DateTime, tz="EST")) %>%
-        mutate(Animal_ID = 
-             ifelse(AntennaID == 001, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 1][1], 
-             ifelse(AntennaID == 002, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 2][1],
-             ifelse(AntennaID == 003, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 3][1],
-             ifelse(AntennaID == 004, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 4][1],
-             ifelse(AntennaID == 005, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 5][1],
-             ifelse(AntennaID == 006, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 6][1],
-             ifelse(AntennaID == 007, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 0][1], NA)))))))) 
+    mutate(Animal_ID = 
+             ifelse(AntennaID == 1, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 1][1], 
+             ifelse(AntennaID == 2, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 2][1],
+             ifelse(AntennaID == 3, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 3][1],
+             ifelse(AntennaID == 4, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 4][1],
+             ifelse(AntennaID == 5, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 5][1],
+             ifelse(AntennaID == 6, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 6][1],
+             ifelse(AntennaID == 7, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 0][1], NA)))))))) %>%
+  mutate(sex = 
+           ifelse(AntennaID == 1, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 1][1], 
+           ifelse(AntennaID == 2, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 2][1],
+           ifelse(AntennaID == 3, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 3][1],
+           ifelse(AntennaID == 4, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 4][1],
+           ifelse(AntennaID == 5, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 5][1],
+           ifelse(AntennaID == 6, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 6][1],
+           ifelse(AntennaID == 7, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 0][1], NA))))))))
   
   target <- c(1,2,3,4,5,6,7)
   tempscages <- rawtemps %>% filter(AntennaID %in% target)
