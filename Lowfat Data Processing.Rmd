@@ -52,7 +52,7 @@ mouse_metadata_rep2 <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology
 mouse_metadata_rep3 <- read_excel("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/mouse_data.xlsx", 
     sheet = "rep3_new", col_types = c("text", 
         "numeric", "numeric", "text", "text", 
-        "numeric", "text", "text", "numeric", 
+        "numeric", "text", "text", "numeric", "numeric", 
         "numeric", "numeric", "numeric", 
         "numeric", "numeric", "numeric", 
         "numeric", "numeric", "numeric", 
@@ -524,8 +524,8 @@ day2_temps <-
         ldr3_temps[ldr3_temps$DateTime %within% day2_rep3,])
 
 day3_temps <-
-  rbind(mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within% day3_rep1,],
-        mouse_metadata_rep2[mouse_metadata_rep2$DateTime %within% day3_rep2,],
+  rbind(#mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within% day3_rep1,],
+        #mouse_metadata_rep2[mouse_metadata_rep2$DateTime %within% day3_rep2,],
         ldr3_temps[ldr3_temps$DateTime %within% day3_rep3,])
 
 baseline <- 
@@ -549,6 +549,8 @@ day3 <-
   rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% day3_rep1,],
         lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% day3_rep2,],
         lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% day3_rep2,])
+
+all_data <- rbind(lowfat_dehydration_noOL_rep1,lowfat_dehydration_noOL_rep2, lowfat_dehydration_noOL_rep3)
 
 
 
@@ -596,6 +598,7 @@ Make plots
 ```{r make plots}
 
 coeff <- 0
+cols <- c("Baseline"="navyblue","Day 1"="sienna1","Day 2"="sienna3", "Day 3"="sienna4")
 temperatures <- ggplot(data = baseline_temps ,aes(x=as.POSIXct(time),y=body_temp)) +
   scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
   annotate("rect", xmin = as.POSIXct("1970-01-01 00:00:01", tz="UTC"), 
@@ -624,7 +627,6 @@ temperatures
 
 
 
-cols <- c("Baseline"="navyblue","Day 1"="sienna1","Day 2"="sienna3", "Day 3"="sienna4")
 EE <- ggplot(data = baseline,aes(x=as.POSIXct(time),y=EE_kJH)) +
   scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
   annotate("rect", xmin = as.POSIXct("1970-01-01 00:00:01", tz="UTC"), 
@@ -701,6 +703,10 @@ temperatures/activity/EE/water
 
 ```
 
+```{r stats}
+EE_kJH_Act <- lm(data = baseline, formula = EE_kJH ~ Activity)
+
+```
 
 ```{r other plots}
 

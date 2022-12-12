@@ -157,7 +157,7 @@ bring_in_data_rep3 <- function(data_file)
              ifelse(Animal == 5, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 5][1],
              ifelse(Animal == 6, mouse_metadata_rep3$animal_id[mouse_metadata_rep3$cage == 6][1], NA)))))))) 
   
-  target <- c(0,1,2,3,4,5,6,7)
+  target <- c(0,1,2,3,5,6,7)
   cages <- raw %>% filter(Animal %in% target)
   
   return(cages)
@@ -169,6 +169,7 @@ bring_in_temps_rep3 <- function(data_file)
   rawtemps <- read_csv(data, skip_empty_rows=TRUE,
                   col_types = cols(date = col_date(format = "%m/%d/%Y"),
                                    AntennaID = col_integer(), 
+                                   body_temp = col_double(),
                                    time = col_time(format = "%H:%M:%S")), na = "")
   
   rawtemps <- rawtemps %>% 
@@ -192,7 +193,7 @@ bring_in_temps_rep3 <- function(data_file)
            ifelse(AntennaID == 6, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 6][1],
            ifelse(AntennaID == 7, mouse_metadata_rep3$sex[mouse_metadata_rep3$cage == 0][1], NA))))))))
   
-  target <- c(1,2,3,4,5,6,7)
+  target <- c(1,2,3,5,6,7)
   tempscages <- rawtemps %>% filter(AntennaID %in% target)
   
   return(tempscages)
