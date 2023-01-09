@@ -34,7 +34,7 @@ library(dplyr)
 ```{r create environment}
 setwd("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/R/lowfat_dehydration/")
 path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/"
-source("functions.R")
+source("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/R/functions.R")
 ```
 
 ```{r bring in metadata and weights message=FALSE, warning=FALSE, echo=FALSE}
@@ -57,8 +57,18 @@ mouse_metadata_rep3 <- read_excel("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiolo
         "numeric", "numeric", "numeric", 
         "numeric", "numeric", "numeric", 
         "numeric", "text"))
-```
 
+mouse_metadata_lowfat_rep4 <- read_excel("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/mouse_data.xlsx", 
+    sheet = "rep4_lowfat", col_types = c("text", 
+        "numeric", "numeric", "text", "text", 
+        "numeric", "text", "text", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "text"))
+
+
+```
 
 ```{r import data rep 1 message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -69,6 +79,7 @@ chunk5 <- chunk5 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 chunk5_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk5_activity.csv", n_max=dim(chunk5)[1])
 
 #this is for room temperature
+path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/"
 chunk1 <- bring_in_data_rep1("chunk1.csv")
 chunk1 <- chunk1 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 chunk1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_baseline/chunk1_activity.csv", n_max=dim(chunk1)[1])
@@ -78,7 +89,6 @@ ldr1 <- bring_in_data_rep1("lowfat_dehydrated_rep1.csv")
 ldr1 <- ldr1 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 ldr1_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep1/lowfat_dehydrated_rep1_activity.csv", n_max=dim(ldr1)[1])
 ```
-
 
 ```{r import data rep 2 message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -97,6 +107,7 @@ ldr2 <- bring_in_data_rep2("lowfat_dehydrated_0to3_rep2.csv")
 ldr2 <- ldr2 %>% mutate(DateTime = with_tz(DateTime, tz="EST") + hours(1))
 ldr2_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep2/lowfat_dehydrated_0to3_rep2_activity.csv", n_max=dim(ldr2)[1])
 ```
+
 ```{r import data rep 3 message=FALSE, warning=FALSE, echo=FALSE}
 
 #this is the physiology data for the dehydration part of the experiment rep3
@@ -110,7 +121,17 @@ ldr3_temps <- bring_in_temps_rep3("temps_rep3.csv")
 
 ```
 
+```{r import data rep 4 message=FALSE, warning=FALSE, echo=FALSE}
 
+#this is the physiology data for the dehydration part of the lowfat experiment rep4
+
+path <- "C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep4/"
+ldr4 <- bring_in_data_lowfat_rep4("lowfat_dehydrated_rep4.csv")
+ldr4 <- ldr4 %>% mutate(DateTime = with_tz(DateTime, tz="EST"))
+ldr4_act <- read_csv("C:/Users/mdm2000/OneDrive - USNH/PeroPhysiology/data/lowfat_dehydration_rep4/lowfat_dehydrated_rep4_activity.csv", n_max=dim(ldr4)[1])
+
+ldr4_temps <- bring_in_temps_lowfat_rep4("lowfat_temps_rep4.csv")
+```
 
 ```{r manipulate data REP1}
 
@@ -409,29 +430,101 @@ masterlist_noDup <- unique(masterlist)
 lowfat_dehydration_noOL_rep3 <- ldr3_cages[-c(masterlist_noDup),]
 ```
 
+
+
+```{r manipulate data LOWFAT REP4}
+
+################### ldr4
+
+#make activity data non-cumulative
+ldr4 <- ldr4 %>% 
+  add_column(MOD_ADX = ldr4_act$MOD_ADX) %>%
+  mutate(Activity = MOD_ADX - lag(MOD_ADX, default = 0))
+
+
+
+#subset out baseline data
+baseline <- c(7)
+baseline_cage <- ldr4 %>% 
+  filter(Animal %in% baseline)
+
+
+#subset out animal data
+target <- c(0,1,2,3,4,5,6)
+cages <- ldr4 %>% 
+  filter(Animal %in% target)
+
+cages <- cages %>% 
+  dplyr::select(Animal_ID, sex, DateTime, date, time, weight, Activity, EE_KCalH, EE_kJH, H2Omg, 
+         H2Oml, Deg_C, CO2, VO2, VCO2, RQ, SD_VO2, SD_VCO2, SD_H2Oml, 
+         SD_H2Omg, SS4_FR, H2O_WVP, BP)
+
+ldr4_cages <- cages
+
+
+count = 1
+dependent_variables = c("EE_kJH", "RQ", "VO2", "VCO2", "H2Omg", "Activity")
+varname_list = c("EE_OLs","RQ_OLs","VO2_OLs","VCO2_OLs","H2O_OLs", "Activity_OLs")
+
+for (DV in dependent_variables){
+  print(DV)
+    model <- lm(as.formula(paste0(DV, " ~ Animal_ID")), data = ldr4_cages)
+  model.metrics <- augment(model) %>% dplyr::select(-.hat, -.sigma, -.fitted)
+  summ <- model.metrics %>% filter(abs(.std.resid) > 2) %>% as.data.frame()
+
+    OL_list = c()
+  masterlist = c()
+  for (each_outlier_row in 1:nrow(summ)){
+    this_weight <- summ[each_outlier_row, "Animal_ID"]
+    this_DV  <- summ[each_outlier_row, DV]
+    OL_list <- c(OL_list, (which(ldr4_cages$Animal_ID == this_weight & ldr4_cages[DV] == this_DV)))
+
+  }
+  print(OL_list)
+  #Assign list of outliers to specified variable lists (OL_list_EE_kJH, RQ, VO2, VCO2, mgH2O)
+  assign(paste("OL_list_", DV, sep = ""), OL_list)  
+}
+
+masterlist <- c(OL_list_EE_kJH, OL_list_RQ, OL_list_VO2, OL_list_VCO2, OL_list_H2Omg, OL_list_Activity)
+masterlist_noDup <- unique(masterlist)
+
+lowfat_dehydration_noOL_rep4 <- ldr4_cages[-c(masterlist_noDup),]
+
+```
+
+
+
+
 ```{r make experimental intervals}
-rep1_water_removal <- ymd_hms("2022-10-06 11:59:59", tz="EST")
-baseline_rep1 <- interval(rep1_water_removal - days(3), rep1_water_removal)
-day1_rep1 <- interval(rep1_water_removal, rep1_water_removal + days(1))
-day2_rep1 <- interval(rep1_water_removal + days(1), rep1_water_removal + days(2))
-day3_rep1 <- interval(rep1_water_removal + days(2), rep1_water_removal + days(3))
+lowfat_rep1_water_removal <- ymd_hms("2022-10-06 11:59:59", tz="EST")
+baseline_lowfat_rep1 <- interval(lowfat_rep1_water_removal - days(3), lowfat_rep1_water_removal)
+day1_lowfat_rep1 <- interval(lowfat_rep1_water_removal, lowfat_rep1_water_removal + days(1))
+day2_lowfat_rep1 <- interval(lowfat_rep1_water_removal + days(1), lowfat_rep1_water_removal + days(2))
+day3_lowfat_rep1 <- interval(lowfat_rep1_water_removal + days(2), lowfat_rep1_water_removal + days(3))
 
-rep2_water_removal <- ymd_hms("2022-10-30 11:59:59", tz="EST")
-baseline_rep2 <- interval(rep2_water_removal - days(3), rep2_water_removal)
-day1_rep2 <- interval(rep2_water_removal, rep2_water_removal + days(1))
-day2_rep2 <- interval(rep2_water_removal + days(1), rep2_water_removal + days(2))
-day3_rep2 <- interval(rep2_water_removal + days(2), rep2_water_removal + days(3))
+lowfat_rep2_water_removal <- ymd_hms("2022-10-30 11:59:59", tz="EST")
+baseline_lowfat_rep2 <- interval(lowfat_rep2_water_removal - days(3), lowfat_rep2_water_removal)
+day1_lowfat_rep2 <- interval(lowfat_rep2_water_removal, lowfat_rep2_water_removal + days(1))
+day2_lowfat_rep2 <- interval(lowfat_rep2_water_removal + days(1), lowfat_rep2_water_removal + days(2))
+day3_lowfat_rep2 <- interval(lowfat_rep2_water_removal + days(2), lowfat_rep2_water_removal + days(3))
 
-rep3_water_removal <- ymd_hms("2022-12-06 11:59:59", tz="EST")
-baseline_rep3 <- interval(rep3_water_removal - days(3), rep3_water_removal)
-day1_rep3 <- interval(rep3_water_removal, rep3_water_removal + days(1))
-day2_rep3 <- interval(rep3_water_removal + days(1), rep3_water_removal + days(2))
-day3_rep3 <- interval(rep3_water_removal + days(2), rep3_water_removal + days(3))
+lowfat_rep3_water_removal <- ymd_hms("2022-12-06 11:59:59", tz="EST")
+baseline_lowfat_rep3 <- interval(lowfat_rep3_water_removal - days(3), lowfat_rep3_water_removal)
+day1_lowfat_rep3 <- interval(lowfat_rep3_water_removal, lowfat_rep3_water_removal + days(1))
+day2_lowfat_rep3 <- interval(lowfat_rep3_water_removal + days(1), lowfat_rep3_water_removal + days(2))
+day3_lowfat_rep3 <- interval(lowfat_rep3_water_removal + days(2), lowfat_rep3_water_removal + days(3))
 
+lowfat_rep4_water_removal <- ymd_hms("2023-01-09 11:59:59", tz="EST")
+baseline_lowfat_rep4 <- interval(lowfat_rep4_water_removal - days(3), lowfat_rep4_water_removal)
+day1_lowfat_rep4 <- interval(lowfat_rep4_water_removal, lowfat_rep4_water_removal + days(1))
+day2_lowfat_rep4 <- interval(lowfat_rep4_water_removal + days(1), lowfat_rep4_water_removal + days(2))
+day3_lowfat_rep4 <- interval(lowfat_rep4_water_removal + days(2), lowfat_rep4_water_removal + days(3))
 
-baseline_temp_rep1 <- interval(rep1_water_removal - days(30), rep1_water_removal)
-baseline_temp_rep2 <- interval(rep2_water_removal - days(30), rep2_water_removal)
-baseline_temp_rep3 <- interval(rep3_water_removal - days(3), rep3_water_removal)
+baseline_temp_lowfat_rep1 <- interval(lowfat_rep1_water_removal - days(30), lowfat_rep1_water_removal)
+baseline_temp_lowfat_rep2 <- interval(lowfat_rep2_water_removal - days(30), lowfat_rep2_water_removal)
+baseline_temp_lowfat_rep3 <- interval(lowfat_rep3_water_removal - days(3), lowfat_rep3_water_removal)
+baseline_temp_lowfat_rep4 <- interval(lowfat_rep4_water_removal - days(3), lowfat_rep4_water_removal)
+
 
 ```
 
@@ -446,10 +539,10 @@ lowfat_dehydration_noOL_rep1 <- lowfat_dehydration_noOL_rep1 %>%
     add_column(experiment_day = NA)
 
 
-lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% baseline_rep1 == "TRUE"] <- "baseline"
-lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day1_rep1 == "TRUE"] <- "day1"
-lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day2_rep1 == "TRUE"] <- "day2"
-lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day3_rep1 == "TRUE"] <- "day3"
+lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% baseline_lowfat_rep1 == "TRUE"] <- "baseline"
+lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day1_lowfat_rep1 == "TRUE"] <- "day1"
+lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day2_lowfat_rep1 == "TRUE"] <- "day2"
+lowfat_dehydration_noOL_rep1$experiment_day[lowfat_dehydration_noOL_rep1$DateTime %within% day3_lowfat_rep1 == "TRUE"] <- "day3"
 write.csv(lowfat_dehydration_noOL_rep1, "lowfat_dehydration_rep1.csv", row.names = FALSE)
 
 ```
@@ -463,10 +556,10 @@ lowfat_dehydration_noOL_rep2 <- lowfat_dehydration_noOL_rep2 %>%
 lowfat_dehydration_noOL_rep2 <- lowfat_dehydration_noOL_rep2 %>%
     mutate(replicate = "rep2")
 
-lowfat_dehydration_noOL_rep2$experiment_day[lowfat_dehydration_noOL_rep2$DateTime %within% baseline_rep2 == "TRUE"] <- "baseline"
-lowfat_dehydration_noOL_rep2$experiment_day[lowfat_dehydration_noOL_rep2$DateTime %within% day1_rep2 == "TRUE"] <- "day1"
-lowfat_dehydration_noOL_rep2$experiment_day[lowfat_dehydration_noOL_rep2$DateTime %within% day2_rep2 == "TRUE"] <- "day2"
-lowfat_dehydration_noOL_rep2$experiment_day[lowfat_dehydration_noOL_rep2$DateTime %within% day3_rep2 == "TRUE"] <- "day3"
+lowfat_dehydration_noOL_rep2$experiment_day[lowfat_dehydration_noOL_rep2$DateTime %within% baseline_lowfat_rep2 == "TRUE"] <- "baseline"
+lowfat_dehydration_noOL_rep2$experiment_day[lowfat_dehydration_noOL_rep2$DateTime %within% day1_lowfat_rep2 == "TRUE"] <- "day1"
+lowfat_dehydration_noOL_rep2$experiment_day[lowfat_dehydration_noOL_rep2$DateTime %within% day2_lowfat_rep2 == "TRUE"] <- "day2"
+lowfat_dehydration_noOL_rep2$experiment_day[lowfat_dehydration_noOL_rep2$DateTime %within% day3_lowfat_rep2 == "TRUE"] <- "day3"
 
 
 lowfat_dehydration_noOL_rep2a <- lowfat_dehydration_noOL_rep2
@@ -487,10 +580,10 @@ lowfat_dehydration_noOL_rep3 <- lowfat_dehydration_noOL_rep3 %>%
 lowfat_dehydration_noOL_rep3 <- lowfat_dehydration_noOL_rep3 %>%
     mutate(replicate = "rep3")
 
-lowfat_dehydration_noOL_rep3$experiment_day[lowfat_dehydration_noOL_rep3$DateTime %within% baseline_rep3 == "TRUE"] <- "baseline"
-lowfat_dehydration_noOL_rep3$experiment_day[lowfat_dehydration_noOL_rep3$DateTime %within% day1_rep3 == "TRUE"] <- "day1"
-lowfat_dehydration_noOL_rep3$experiment_day[lowfat_dehydration_noOL_rep3$DateTime %within% day2_rep3 == "TRUE"] <- "day2"
-lowfat_dehydration_noOL_rep3$experiment_day[lowfat_dehydration_noOL_rep3$DateTime %within% day3_rep3 == "TRUE"] <- "day3"
+lowfat_dehydration_noOL_rep3$experiment_day[lowfat_dehydration_noOL_rep3$DateTime %within% baseline_lowfat_rep3 == "TRUE"] <- "baseline"
+lowfat_dehydration_noOL_rep3$experiment_day[lowfat_dehydration_noOL_rep3$DateTime %within% day1_lowfat_rep3 == "TRUE"] <- "day1"
+lowfat_dehydration_noOL_rep3$experiment_day[lowfat_dehydration_noOL_rep3$DateTime %within% day2_lowfat_rep3 == "TRUE"] <- "day2"
+lowfat_dehydration_noOL_rep3$experiment_day[lowfat_dehydration_noOL_rep3$DateTime %within% day3_lowfat_rep3 == "TRUE"] <- "day3"
 
 
 lowfat_dehydration_noOL_rep3a <- lowfat_dehydration_noOL_rep3
@@ -504,53 +597,80 @@ write.csv(lowfat_dehydration_noOL_rep3, "lowfat_dehydration_rep3.csv", row.names
 ```
 
 
+```{r add metadata REP4}
+
+
+lowfat_dehydration_noOL_rep4 <- lowfat_dehydration_noOL_rep4 %>%
+    mutate(replicate = "rep4")
+
+lowfat_dehydration_noOL_rep4 <- lowfat_dehydration_noOL_rep4 %>%
+    add_column(experiment_day = NA)
+
+
+lowfat_dehydration_noOL_rep4$experiment_day[lowfat_dehydration_noOL_rep4$DateTime %within% baseline_lowfat_rep4 == "TRUE"] <- "baseline"
+lowfat_dehydration_noOL_rep4$experiment_day[lowfat_dehydration_noOL_rep4$DateTime %within% day1_lowfat_rep4 == "TRUE"] <- "day1"
+lowfat_dehydration_noOL_rep4$experiment_day[lowfat_dehydration_noOL_rep4$DateTime %within% day2_lowfat_rep4 == "TRUE"] <- "day2"
+lowfat_dehydration_noOL_rep4$experiment_day[lowfat_dehydration_noOL_rep4$DateTime %within% day3_lowfat_rep4 == "TRUE"] <- "day3"
+write.csv(lowfat_dehydration_noOL_rep4, "lowfat_dehydration_rep4.csv", row.names = FALSE)
+
+```
+
+
 
 ```{r merge reps for differert days}
 ###### make data frames that contain all the data for a given interval. 
 
-baseline_temps <-
+lowfat_baseline_temps <-
   rbind(#mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within% baseline_temp_rep1,],
         #mouse_metadata_rep2[mouse_metadata_rep2$DateTime %within% baseline_temp_rep2,],
-        ldr3_temps[ldr3_temps$DateTime %within% baseline_temp_rep3,])
+        ldr3_temps[ldr3_temps$DateTime %within% baseline_temp_lowfat_rep3,],
+        ldr4_temps[ldr4_temps$DateTime %within% baseline_temp_lowfat_rep4,])
 
-day1_temps <-
+lowfat_day1_temps <-
   rbind(#mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within% day1_rep1,],
         #mouse_metadata_rep2[mouse_metadata_rep2$DateTime %within% day1_rep2,],
-        ldr3_temps[ldr3_temps$DateTime %within% day1_rep3,])
+        ldr3_temps[ldr3_temps$DateTime %within% day1_lowfat_rep3,],
+        ldr4_temps[ldr4_temps$DateTime %within% day2_lowfat_rep4,])
 
-day2_temps <-
+lowfat_day2_temps <-
   rbind(#mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within% day2_rep1,],
         #mouse_metadata_rep2[mouse_metadata_rep2$DateTime %within% day2_rep2,],
-        ldr3_temps[ldr3_temps$DateTime %within% day2_rep3,])
+        ldr3_temps[ldr3_temps$DateTime %within% day2_lowfat_rep3,],
+        ldr4_temps[ldr4_temps$DateTime %within% day2_lowfat_rep4,])
 
-day3_temps <-
+lowfat_day3_temps <-
   rbind(#mouse_metadata_rep1[mouse_metadata_rep1$DateTime %within% day3_rep1,],
         #mouse_metadata_rep2[mouse_metadata_rep2$DateTime %within% day3_rep2,],
-        ldr3_temps[ldr3_temps$DateTime %within% day3_rep3,])
+        ldr3_temps[ldr3_temps$DateTime %within% day2_lowfat_rep3,],
+        ldr4_temps[ldr4_temps$DateTime %within% day2_lowfat_rep4,])
 
-baseline <- 
-  rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% baseline_rep1,],
-        lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% baseline_rep2,],
-        lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% baseline_rep3,])
+lowfat_baseline <- 
+  rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% baseline_lowfat_rep1,],
+        lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% baseline_lowfat_rep2,],
+        lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% baseline_lowfat_rep3,],
+        lowfat_dehydration_noOL_rep4[lowfat_dehydration_noOL_rep4$DateTime %within% baseline_lowfat_rep4,])
 
-day1 <-
-  rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% day1_rep1,],
-        lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% day1_rep2,],
-        lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% day1_rep3,])
-
-
-day2 <-
-  rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% day2_rep1,],
-        lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% day2_rep2,],
-        lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% day2_rep3,])
+lowfat_day1 <-
+  rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% day1_lowfat_rep1,],
+        lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% day1_lowfat_rep2,],
+        lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% day1_lowfat_rep3,],
+        lowfat_dehydration_noOL_rep4[lowfat_dehydration_noOL_rep4$DateTime %within% day1_lowfat_rep4,])
 
 
-day3 <-
-  rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% day3_rep1,],
-        lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% day3_rep2,],
-        lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% day3_rep2,])
+lowfat_day2 <-
+  rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% day2_lowfat_rep1,],
+        lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% day2_lowfat_rep2,],
+        lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% day2_lowfat_rep3,],
+        lowfat_dehydration_noOL_rep4[lowfat_dehydration_noOL_rep4$DateTime %within% day2_lowfat_rep4,])
 
-all_data <- rbind(lowfat_dehydration_noOL_rep1,lowfat_dehydration_noOL_rep2, lowfat_dehydration_noOL_rep3)
+
+lowfat_day3 <-
+  rbind(lowfat_dehydration_noOL_rep1[lowfat_dehydration_noOL_rep1$DateTime %within% day3_lowfat_rep1,],
+        lowfat_dehydration_noOL_rep2[lowfat_dehydration_noOL_rep2$DateTime %within% day3_lowfat_rep2,],
+        lowfat_dehydration_noOL_rep3[lowfat_dehydration_noOL_rep3$DateTime %within% day3_lowfat_rep3,],
+        lowfat_dehydration_noOL_rep4[lowfat_dehydration_noOL_rep4$DateTime %within% day3_lowfat_rep4,])
+
+all_lowfat_data <- rbind(lowfat_dehydration_noOL_rep1,lowfat_dehydration_noOL_rep2, lowfat_dehydration_noOL_rep3,lowfat_dehydration_noOL_rep4)
 
 
 
@@ -599,7 +719,7 @@ Make plots
 
 coeff <- 0
 cols <- c("Baseline"="navyblue","Day 1"="sienna1","Day 2"="sienna3", "Day 3"="sienna4")
-temperatures <- ggplot(data = baseline_temps ,aes(x=as.POSIXct(time),y=body_temp)) +
+lowfat_temperatures <- ggplot(data = lowfat_baseline_temps ,aes(x=as.POSIXct(time),y=body_temp)) +
   scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
   annotate("rect", xmin = as.POSIXct("1970-01-01 00:00:01", tz="UTC"), 
            xmax = as.POSIXct("1970-01-01 06:00:00", tz="UTC"), 
@@ -608,26 +728,26 @@ temperatures <- ggplot(data = baseline_temps ,aes(x=as.POSIXct(time),y=body_temp
            xmax = as.POSIXct("1970-01-01 23:59:59", tz="UTC"), 
            ymin = -Inf, ymax = Inf, fill="grey84") +
   geom_point(aes(color = "Baseline", alpha=0.1), shape=20, size=0.5)+
-  geom_point(data = day1_temps, aes(color="Day 1", alpha=0.2), shape=20, size=0.5)+
-  geom_point(data = day2_temps, aes(color="Day 2", alpha=0.2), shape=20, size=0.5)+
-  geom_point(data = day3_temps, aes(color="Day 3", alpha=0.2), shape=20, size=0.5)+
+  geom_point(data = lowfat_day1_temps, aes(color="Day 1", alpha=0.2), shape=20, size=0.5)+
+  geom_point(data = lowfat_day2_temps, aes(color="Day 2", alpha=0.2), shape=20, size=0.5)+
+  geom_point(data = lowfat_day3_temps, aes(color="Day 3", alpha=0.2), shape=20, size=0.5)+
   geom_point(data = chunk1, aes(x=as.POSIXct(time), y=Deg_C + coeff), size=1, color="black", shape=4)+
      labs(x = "")+
   theme_classic()+
   geom_smooth(method='gam', se = FALSE, aes(color = "Baseline"), span=0.2, size=2)+
-  geom_smooth(data = day1_temps, method='gam', se = FALSE, aes(color = "Day 1"), size=2)+
-  geom_smooth(data = day2_temps, method='gam', se = FALSE, aes(color = "Day 2"), size=2)+
-  geom_smooth(data = day3_temps, method='gam', se = FALSE, aes(color = "Day 3"), size=2)+
+  geom_smooth(data = lowfat_day1_temps, method='gam', se = FALSE, aes(color = "Day 1"), size=2)+
+  geom_smooth(data = lowfat_day2_temps, method='gam', se = FALSE, aes(color = "Day 2"), size=2)+
+  geom_smooth(data = lowfat_day3_temps, method='gam', se = FALSE, aes(color = "Day 3"), size=2)+
   labs(x = "")+
   scale_y_continuous(name = "Body Temperature (°C)", limits = c(20,40), sec.axis = sec_axis(~. - coeff, name="Room Temperature (°C)"))+ 
   guides(alpha = "none")+
   facet_wrap(~sex) +
  scale_colour_manual(name="Dehydration",values=cols, guide="none")
-temperatures
+lowfat_temperatures
 
 
 
-EE <- ggplot(data = baseline,aes(x=as.POSIXct(time),y=EE_kJH)) +
+lowfat_EE <- ggplot(data = lowfat_baseline,aes(x=as.POSIXct(time),y=EE_kJH)) +
   scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
   annotate("rect", xmin = as.POSIXct("1970-01-01 00:00:01", tz="UTC"), 
            xmax = as.POSIXct("1970-01-01 06:00:00", tz="UTC"), 
@@ -636,22 +756,22 @@ EE <- ggplot(data = baseline,aes(x=as.POSIXct(time),y=EE_kJH)) +
            xmax = as.POSIXct("1970-01-01 23:59:59", tz="UTC"), 
            ymin = -Inf, ymax = Inf, fill="grey84") +
   geom_point(aes(color = "Baseline", alpha=0.1))+
-  geom_point(data = day1, aes(color="Day 1", alpha=0.2))+
-  geom_point(data = day2, aes(color="Day 2", alpha=0.2))+
-  geom_point(data = day3, aes(color="Day 3", alpha=0.2))+
+  geom_point(data = lowfat_day1, aes(color="Day 1", alpha=0.2))+
+  geom_point(data = lowfat_day2, aes(color="Day 2", alpha=0.2))+
+  geom_point(data = lowfat_day3, aes(color="Day 3", alpha=0.2))+
   theme_classic()+
   ylim(0,1.5) +
   geom_smooth(method='gam', se = FALSE, aes(color = "Baseline"))+
-  geom_smooth(data = day1, method='gam', se = FALSE, aes(color = "Day 1"))+
-  geom_smooth(data = day2, method='gam', se = FALSE, aes(color = "Day 2"))+
-  geom_smooth(data = day3, method='gam', se = FALSE, aes(color = "Day 3"))+
+  geom_smooth(data = lowfat_day1, method='gam', se = FALSE, aes(color = "Day 1"))+
+  geom_smooth(data = lowfat_day2, method='gam', se = FALSE, aes(color = "Day 2"))+
+  geom_smooth(data = lowfat_day3, method='gam', se = FALSE, aes(color = "Day 3"))+
   labs(x = "", y = expression(EE ~ (KiloJoules ~ h^-1)))+
   guides(alpha = "none")+
   facet_wrap(~sex) +
   scale_colour_manual(name="Dehydration",values=cols, guide="none")
-EE
+lowfat_EE
 
-activity <- ggplot(data = baseline,aes(x=as.POSIXct(time),y=Activity)) +
+lowfat_activity <- ggplot(data = lowfat_baseline,aes(x=as.POSIXct(time),y=Activity)) +
   scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
   annotate("rect", xmin = as.POSIXct("1970-01-01 00:00:01", tz="UTC"), 
            xmax = as.POSIXct("1970-01-01 06:00:00", tz="UTC"), 
@@ -660,22 +780,22 @@ activity <- ggplot(data = baseline,aes(x=as.POSIXct(time),y=Activity)) +
            xmax = as.POSIXct("1970-01-01 23:59:59", tz="UTC"), 
            ymin = -Inf, ymax = Inf, fill="grey84") +
   geom_point(aes(color = "Baseline", alpha=0.2))+
-  geom_point(data = day1, aes(color="Day 1", alpha=0.2))+
-  geom_point(data = day2, aes(color="Day 2", alpha=0.2))+
-  geom_point(data = day3, aes(color="Day 3", alpha=0.2))+
+  geom_point(data = lowfat_day1, aes(color="Day 1", alpha=0.2))+
+  geom_point(data = lowfat_day2, aes(color="Day 2", alpha=0.2))+
+  geom_point(data = lowfat_day3, aes(color="Day 3", alpha=0.2))+
   theme_classic()+
   ylim(0,1500) +
   geom_smooth(method='gam', se = FALSE, aes(color = "Baseline"))+
-  geom_smooth(data = day1, method='gam', se = FALSE, aes(color = "Day 1"))+
-  geom_smooth(data = day2, method='gam', se = FALSE, aes(color = "Day 2"))+
-  geom_smooth(data = day3, method='gam', se = FALSE, aes(color = "Day 3"))+
+  geom_smooth(data = lowfat_day1, method='gam', se = FALSE, aes(color = "Day 1"))+
+  geom_smooth(data = lowfat_day2, method='gam', se = FALSE, aes(color = "Day 2"))+
+  geom_smooth(data = lowfat_day3, method='gam', se = FALSE, aes(color = "Day 3"))+
   labs(x = "", y = "Activity")+
   guides(alpha = "none")+
   facet_wrap(~sex) +
 scale_colour_manual(name="Dehydration",values=cols, guide="none")
-activity
+lowfat_activity
 
-water <- ggplot(data = baseline,aes(x=as.POSIXct(time),y=H2Omg)) +
+lowfat_water <- ggplot(data = lowfat_baseline,aes(x=as.POSIXct(time),y=H2Omg)) +
   scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
   annotate("rect", xmin = as.POSIXct("1970-01-01 00:00:01", tz="UTC"), 
            xmax = as.POSIXct("1970-01-01 06:00:00", tz="UTC"), 
@@ -684,22 +804,22 @@ water <- ggplot(data = baseline,aes(x=as.POSIXct(time),y=H2Omg)) +
            xmax = as.POSIXct("1970-01-01 23:59:59", tz="UTC"), 
            ymin = -Inf, ymax = Inf, fill="grey84") +
   geom_point(aes(color = "Baseline", alpha=0.2))+
-  geom_point(data = day1, aes(color="Day 1", alpha=0.2))+
-  geom_point(data = day2, aes(color="Day 2", alpha=0.2))+
-  geom_point(data = day3, aes(color="Day 3", alpha=0.2))+
+  geom_point(data = lowfat_day1, aes(color="Day 1", alpha=0.2))+
+  geom_point(data = lowfat_day2, aes(color="Day 2", alpha=0.2))+
+  geom_point(data = lowfat_day3, aes(color="Day 3", alpha=0.2))+
   theme_classic()+
   ylim(0,7.5) +
   geom_smooth(method='gam', se = FALSE, aes(color = "Baseline"))+
-  geom_smooth(data = day1, method='gam', se = FALSE, aes(color = "Day 1"))+
-  geom_smooth(data = day2, method='gam', se = FALSE, aes(color = "Day 2"))+
-  geom_smooth(data = day3, method='gam', se = FALSE, aes(color = "Day 3"))+
+  geom_smooth(data = lowfat_day1, method='gam', se = FALSE, aes(color = "Day 1"))+
+  geom_smooth(data = lowfat_day2, method='gam', se = FALSE, aes(color = "Day 2"))+
+  geom_smooth(data = lowfat_day3, method='gam', se = FALSE, aes(color = "Day 3"))+
   labs(x = "", y = "H2Omg")+
   guides(alpha = "none")+
   facet_wrap(~sex) +
   scale_colour_manual(name="Dehydration",values=cols)
-water
+lowfat_water
 
-temperatures/activity/EE/water
+lowfat_temperatures/lowfat_activity/lowfat_EE/lowfat_water
 
 ```
 
